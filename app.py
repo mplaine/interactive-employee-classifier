@@ -100,18 +100,20 @@ def render_ui():
 
         # Model
         st.header("Model")
-        algorithm = st.selectbox(label="Choose algorithm", options=("Decision Tree", "Random Forest", "XGBoost"), index=2, key="algorithm")
+        algorithm = st.selectbox(label="Choose algorithm", options=("Decision Tree", "Random Forest", "XGBoost"), index=0, key="algorithm")
 
         # Form
         form = st.form(key="data_modeling_form", border=False)
         with form:
             # Hyperparameters
             st.header("Hyperparameters")
-            with st.expander("Tune model"):
+            with st.expander("Fine-tune model", expanded=False):
                 if algorithm == "Decision Tree":
-                    max_depth = st.number_input(label="Max depth", help="The maximum depth of the tree.", min_value=1, max_value=None, value=None, step=1, placeholder="None")
-                    min_samples_leaf = st.number_input(label="Min samples leaf", help="The minimum number of samples required to be at a leaf node.", min_value=1, max_value=None, value=1, step=1, placeholder="1")
-                    min_samples_split = st.number_input(label="Min samples split", help="The minimum number of samples required to split an internal node.", min_value=2, max_value=None, value=2, step=1, placeholder="2")
+                    criterion = st.selectbox(label="criterion", options=("gini", "entropy", "log_loss"), index=0, help="The function to measure the quality of a split.")
+                    max_depth = st.number_input(label="max_depth", min_value=1, max_value=None, value=None, step=1, placeholder="None", help="The maximum depth of the tree.")
+                    max_features = st.number_input(label="max_features", min_value=1, max_value=None, value=None, step=1, placeholder="None", help="The number of features to consider when looking for the best split.")
+                    min_samples_leaf = st.number_input(label="min_samples_leaf", min_value=1, max_value=None, value=1, step=1, help="The minimum number of samples required to be at a leaf node.")
+                    min_samples_split = st.number_input(label="min_samples_split", min_value=2, max_value=None, value=2, step=1, help="The minimum number of samples required to split an internal node.")
                 elif algorithm == "Random Forest":
                     max_depth = st.number_input(label="Max depth", help="The maximum depth of the tree.", min_value=1, max_value=None, value=None, step=1, placeholder="None")
                     max_features = st.number_input(label="Max features", help="The number of features to consider when looking for the best split.", min_value=1, max_value=None, value=None, step=1, placeholder="None")
@@ -141,7 +143,7 @@ def render_ui():
 
             # Create model instance
             if algorithm == "Decision Tree":
-                model = DecisionTreeClassifier(max_depth=max_depth, min_samples_leaf=min_samples_leaf, min_samples_split=min_samples_split, random_state=42) # type: ignore
+                model = DecisionTreeClassifier(criterion=criterion, max_depth=max_depth, max_features=max_features, min_samples_leaf=min_samples_leaf, min_samples_split=min_samples_split, random_state=42) # type: ignore
             elif algorithm == "Random Forest":
                 model = RandomForestClassifier(max_depth=max_depth, max_features=max_features, max_samples=max_samples, min_samples_leaf=min_samples_leaf, min_samples_split=min_samples_split, n_estimators=n_estimators, n_jobs=-1, random_state=42) # type: ignore
             elif algorithm == "XGBoost":
