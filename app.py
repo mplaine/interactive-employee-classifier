@@ -4,12 +4,11 @@
 
 import altair as alt
 import pandas as pd
-import seaborn as sns
 import streamlit as st
 from matplotlib import pyplot as plt
 from pathlib import Path
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import ConfusionMatrixDisplay, PrecisionRecallDisplay, RocCurveDisplay, accuracy_score, auc, confusion_matrix, f1_score, precision_score, recall_score, roc_curve
+from sklearn.metrics import ConfusionMatrixDisplay, PrecisionRecallDisplay, RocCurveDisplay, accuracy_score, confusion_matrix, f1_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
@@ -30,6 +29,8 @@ __version__ = "1.0"
 
 # Constants
 DATASETS_DIR = Path("datasets")
+FORM_BUTTON_LABEL_ENABLED = "Run model"
+FORM_BUTTON_LABEL_DISABLED = "Training model..."
 
 
 def main():
@@ -38,15 +39,20 @@ def main():
 
 
 def initialize_session():
-    # if "preview_data" not in st.session_state:
-    #     st.session_state["preview_data"] = False
-
+    if "form_submit_button_label" not in st.session_state:
+        st.session_state["form_submit_button_label"] = FORM_BUTTON_LABEL_ENABLED
+    if "form_submit_button_disabled" not in st.session_state:
+        st.session_state["form_submit_button_disabled"] = False
+    if "y_test" not in st.session_state:
+        st.session_state["y_test"] = None
+    if "y_pred" not in st.session_state:
+        st.session_state["y_pred"] = None
+    if "feature_names" not in st.session_state:
+        st.session_state["feature_names"] = None
+    if "feature_importances" not in st.session_state:
+        st.session_state["feature_importances"] = None
     if "show_evaluation_results" not in st.session_state:
         st.session_state["show_evaluation_results"] = False
-
-    if "display_results" not in st.session_state:
-        st.session_state["display_results"] = False
-
     if "metrics" not in st.session_state:
         st.session_state["metrics"] = {
             "previous_scores" : {
@@ -63,20 +69,18 @@ def initialize_session():
             }
         }
 
-    if "y_test" not in st.session_state:
-        st.session_state["y_test"] = None
-    if "y_pred" not in st.session_state:
-        st.session_state["y_pred"] = None
-    if "model" not in st.session_state:
-        st.session_state["model"] = None
+
+def handle_form_submit_button_click():
+    st.session_state["form_submit_button_disabled"] = True
+    st.session_state["form_submit_button_label"] = FORM_BUTTON_LABEL_DISABLED
 
 
 def render_ui():
     # Main
     st.title("Interactive Employee Classifier")
-    st.write("A brief introduction.")
-    dataset_preview_container = st.container()
-
+    st.write(f"`Version {__version__}`")
+    st.write("Want to predict employee attrition using the features from a HR dataset? Well, look no further! This interactive tool allows you to build, tune, and evaluate different machine learning classification models exactly for this purpose.")
+    main_container = st.container()
 
     # Sidebar
     with st.sidebar:
@@ -90,51 +94,58 @@ def render_ui():
         df = load_data(DATASETS_DIR / str(dataset))
         X_train, X_test, y_train, y_test = split_data(df)
         if st.checkbox(label="Preview dataset", value=False, key="preview_dataset"):
-            with dataset_preview_container:
+            with main_container:
                 st.header("Dataset Preview")
                 st.dataframe(data=df, use_container_width=True)
 
         # Model
         st.header("Model")
-        algorithm = st.selectbox(label="Choose algorithm", options=("Decision Tree", "Random Forest", "XGBoost"), index=0, key="algorithm")
+        algorithm = st.selectbox(label="Choose algorithm", options=("Decision Tree", "Random Forest", "XGBoost"), index=2, key="algorithm")
 
         # Form
         form = st.form(key="data_modeling_form", border=False)
         with form:
             # Hyperparameters
             st.header("Hyperparameters")
-            if algorithm == "Decision Tree":
-                max_depth = st.number_input(label="Max depth", help="The maximum depth of the tree.", min_value=1, max_value=None, value=None, step=1, placeholder="None")
-                min_samples_leaf = st.number_input(label="Min samples leaf", help="The minimum number of samples required to be at a leaf node.", min_value=1, max_value=None, value=1, step=1, placeholder="1")
-                min_samples_split = st.number_input(label="Min samples split", help="The minimum number of samples required to split an internal node.", min_value=2, max_value=None, value=2, step=1, placeholder="2")
-            elif algorithm == "Random Forest":
-                max_depth = st.number_input(label="Max depth", help="The maximum depth of the tree.", min_value=1, max_value=None, value=None, step=1, placeholder="None")
-                max_features = st.number_input(label="Max features", help="The number of features to consider when looking for the best split.", min_value=1, max_value=None, value=None, step=1, placeholder="None")
-                max_samples = st.number_input(label="Max samples", help="If bootstrap is True, the number of samples to draw from X to train each base estimator.", min_value=1, max_value=X_train.shape[0], value=None, step=1, placeholder="None")
-                min_samples_leaf = st.number_input(label="Min samples leaf", help="The minimum number of samples required to be at a leaf node.", min_value=1, max_value=None, value=1, step=1, placeholder="1")
-                min_samples_split = st.number_input(label="Min samples split", help="The minimum number of samples required to split an internal node.", min_value=2, max_value=None, value=2, step=1, placeholder="2")
-                n_estimators = st.number_input(label="Number of estimators", help="The number of trees in the forest.", min_value=1, max_value=500, value=100, step=1, placeholder="100")
-            elif algorithm == "XGBoost":
-                colsample_bytree = st.number_input(label="Colsample bytree", help="Subsample ratio of columns when constructing each tree.", min_value=0.0, max_value=1.0, value=None, step=0.1, placeholder="None")
-                learning_rate = st.number_input(label="Learning rate", help='Boosting learning rate (xgb’s “eta”)', min_value=0.0, max_value=1.0, value=None, step=0.1, placeholder="None")
-                max_depth = st.number_input(label="Max depth", help="Maximum tree depth for base learners.", min_value=1, max_value=None, value=None, step=1, placeholder="None")
-                min_child_weight = st.number_input(label="Min child weight", help="Minimum sum of instance weight(hessian) needed in a child.", min_value=0.0, max_value=1.0, value=None, step=0.1, placeholder="None")
-                n_estimators = st.number_input(label="Number of estimators", help="Number of boosting rounds.", min_value=1, max_value=500, value=100, step=1, placeholder="100")
-                subsample = st.number_input(label="Subsample", help="Subsample ratio of the training instance.", min_value=0.0, max_value=1.0, value=1.0, step=0.1, placeholder="1.0")
+            with st.expander("Tune model"):
+                if algorithm == "Decision Tree":
+                    max_depth = st.number_input(label="Max depth", help="The maximum depth of the tree.", min_value=1, max_value=None, value=None, step=1, placeholder="None")
+                    min_samples_leaf = st.number_input(label="Min samples leaf", help="The minimum number of samples required to be at a leaf node.", min_value=1, max_value=None, value=1, step=1, placeholder="1")
+                    min_samples_split = st.number_input(label="Min samples split", help="The minimum number of samples required to split an internal node.", min_value=2, max_value=None, value=2, step=1, placeholder="2")
+                elif algorithm == "Random Forest":
+                    max_depth = st.number_input(label="Max depth", help="The maximum depth of the tree.", min_value=1, max_value=None, value=None, step=1, placeholder="None")
+                    max_features = st.number_input(label="Max features", help="The number of features to consider when looking for the best split.", min_value=1, max_value=None, value=None, step=1, placeholder="None")
+                    max_samples = st.number_input(label="Max samples", help="If bootstrap is True, the number of samples to draw from X to train each base estimator.", min_value=1, max_value=X_train.shape[0], value=None, step=1, placeholder="None")
+                    min_samples_leaf = st.number_input(label="Min samples leaf", help="The minimum number of samples required to be at a leaf node.", min_value=1, max_value=None, value=1, step=1, placeholder="1")
+                    min_samples_split = st.number_input(label="Min samples split", help="The minimum number of samples required to split an internal node.", min_value=2, max_value=None, value=2, step=1, placeholder="2")
+                    n_estimators = st.number_input(label="Number of estimators", help="The number of trees in the forest.", min_value=1, max_value=500, value=100, step=1, placeholder="100")
+                elif algorithm == "XGBoost":
+                    colsample_bytree = st.number_input(label="Colsample bytree", help="Subsample ratio of columns when constructing each tree.", min_value=0.0, max_value=1.0, value=None, step=0.1, placeholder="None")
+                    learning_rate = st.number_input(label="Learning rate", help='Boosting learning rate (xgb’s “eta”)', min_value=0.0, max_value=1.0, value=None, step=0.1, placeholder="None")
+                    max_depth = st.number_input(label="Max depth", help="Maximum tree depth for base learners.", min_value=1, max_value=None, value=None, step=1, placeholder="None")
+                    min_child_weight = st.number_input(label="Min child weight", help="Minimum sum of instance weight(hessian) needed in a child.", min_value=0.0, max_value=1.0, value=None, step=0.1, placeholder="None")
+                    n_estimators = st.number_input(label="Number of estimators", help="Number of boosting rounds.", min_value=1, max_value=500, value=500, step=1, placeholder="100")
+                    subsample = st.number_input(label="Subsample", help="Subsample ratio of the training instance.", min_value=0.0, max_value=1.0, value=1.0, step=0.1, placeholder="1.0")
 
             # Button
-            submitted = st.form_submit_button(label="Run model", type="primary", use_container_width=True)
+            st.form_submit_button(label=st.session_state["form_submit_button_label"], type="primary", use_container_width=True, disabled=st.session_state["form_submit_button_disabled"], on_click=handle_form_submit_button_click)
 
-        if submitted:
+        # Footer
+        st.markdown("""
+            ---
+            Created with ❤️ by [Markku Laine](https://markkulaine.com).            
+        """)
+
+        if st.session_state["form_submit_button_disabled"]:
             st.session_state["show_evaluation_results"] = True
 
             # Create model instance
             if algorithm == "Decision Tree":
-                model = DecisionTreeClassifier(max_depth=max_depth, min_samples_leaf=min_samples_leaf, min_samples_split=min_samples_split, random_state=42)
+                model = DecisionTreeClassifier(max_depth=max_depth, min_samples_leaf=min_samples_leaf, min_samples_split=min_samples_split, random_state=42) # type: ignore
             elif algorithm == "Random Forest":
-                model = RandomForestClassifier(max_depth=max_depth, max_features=max_features, max_samples=max_samples, min_samples_leaf=min_samples_leaf, min_samples_split=min_samples_split, n_estimators=n_estimators, n_jobs=-1, random_state=42)
+                model = RandomForestClassifier(max_depth=max_depth, max_features=max_features, max_samples=max_samples, min_samples_leaf=min_samples_leaf, min_samples_split=min_samples_split, n_estimators=n_estimators, n_jobs=-1, random_state=42) # type: ignore
             elif algorithm == "XGBoost":
-                model = XGBClassifier(colsample_bytree=colsample_bytree, learning_rate=learning_rate, max_depth=max_depth, min_child_weight=min_child_weight, n_estimators=n_estimators, subsample=subsample, objective="binary:logistic", n_jobs=-1, random_state=42)
+                model = XGBClassifier(colsample_bytree=colsample_bytree, learning_rate=learning_rate, max_depth=max_depth, min_child_weight=min_child_weight, n_estimators=n_estimators, subsample=subsample, objective="binary:logistic", n_jobs=-1, random_state=42) # type: ignore
 
             # Fit model
             model.fit(X_train, y_train)
@@ -145,7 +156,8 @@ def render_ui():
             # Update session state
             st.session_state["y_test"] = y_test
             st.session_state["y_pred"] = y_pred
-            st.session_state["model"] = model
+            st.session_state["feature_names"] = model.feature_names_in_
+            st.session_state["feature_importances"] = model.feature_importances_
             st.session_state["metrics"]["previous_scores"]["accuracy"] = st.session_state["metrics"]["present_scores"]["accuracy"]
             st.session_state["metrics"]["previous_scores"]["precision"] = st.session_state["metrics"]["present_scores"]["precision"]
             st.session_state["metrics"]["previous_scores"]["recall"] = st.session_state["metrics"]["present_scores"]["recall"]
@@ -154,43 +166,13 @@ def render_ui():
             st.session_state["metrics"]["present_scores"]["precision"] = precision_score(y_test, y_pred)
             st.session_state["metrics"]["present_scores"]["recall"] = recall_score(y_test, y_pred)
             st.session_state["metrics"]["present_scores"]["f1"] = f1_score(y_test, y_pred)
+            st.session_state["form_submit_button_disabled"] = False
+            st.session_state["form_submit_button_label"] = FORM_BUTTON_LABEL_ENABLED
+            st.rerun() # to update button label and status
 
-        # Footer
-        st.markdown("""
-            ---
-            Created with ❤️ by [Markku Laine](https://markkulaine.com).            
-        """)
-
-    # Show results
+    # Show evaluation results
     if st.session_state["show_evaluation_results"]:
-        show_evaluation_results()
-
-
-
-    # # Model hyperparameters
-    # form.subheader("Model Hyperparameters")
-    # if classifier == "Decision Tree":
-    #     max_depth = form.number_input(label="Max depth", help="The maximum depth of the tree.", min_value=1, max_value=None, value=None, step=1, placeholder="None")
-    #     min_samples_leaf = form.number_input(label="Min samples leaf", help="The minimum number of samples required to be at a leaf node.", min_value=1, max_value=None, value=1, step=1, placeholder="1")
-    #     min_samples_split = form.number_input(label="Min samples split", help="The minimum number of samples required to split an internal node.", min_value=2, max_value=None, value=2, step=1, placeholder="2")
-    # elif classifier == "Random Forest":
-    #     max_depth = form.number_input(label="Max depth", help="The maximum depth of the tree.", min_value=1, max_value=None, value=None, step=1, placeholder="None")
-    #     max_features = form.number_input(label="Max features", help="The number of features to consider when looking for the best split.", min_value=1, max_value=None, value=None, step=1, placeholder="None")
-    #     max_samples = form.number_input(label="Max samples", help="If bootstrap is True, the number of samples to draw from X to train each base estimator.", min_value=1, max_value=X_train.shape[0], value=None, step=1, placeholder="None")
-    #     min_samples_leaf = form.number_input(label="Min samples leaf", help="The minimum number of samples required to be at a leaf node.", min_value=1, max_value=None, value=1, step=1, placeholder="1")
-    #     min_samples_split = form.number_input(label="Min samples split", help="The minimum number of samples required to split an internal node.", min_value=2, max_value=None, value=2, step=1, placeholder="2")
-    #     n_estimators = form.number_input(label="Number of estimators", help="The number of trees in the forest.", min_value=1, max_value=500, value=100, step=1, placeholder="100")
-    # elif classifier == "XGBoost":
-    #     colsample_bytree = form.number_input(label="Colsample bytree", help="Subsample ratio of columns when constructing each tree.", min_value=0.0, max_value=1.0, value=None, step=0.1, placeholder="None")
-    #     learning_rate = form.number_input(label="Learning rate", help='Boosting learning rate (xgb’s “eta”)', min_value=0.0, max_value=1.0, value=None, step=0.1, placeholder="None")
-    #     max_depth = form.number_input(label="Max depth", help="Maximum tree depth for base learners.", min_value=1, max_value=None, value=None, step=1, placeholder="None")
-    #     min_child_weight = form.number_input(label="Min child weight", help="Minimum sum of instance weight(hessian) needed in a child.", min_value=0.0, max_value=1.0, value=None, step=0.1, placeholder="None")
-    #     n_estimators = form.number_input(label="Number of estimators", help="Number of boosting rounds.", min_value=1, max_value=500, value=100, step=1, placeholder="100")
-    #     subsample = form.number_input(label="Subsample", help="Subsample ratio of the training instance.", min_value=0.0, max_value=1.0, value=1.0, step=0.1, placeholder="1.0")
-
-    # # Model evaluation
-    # form.subheader("Model Evaluation")
-    # metrics = form.multiselect(label="Metrics", help="The metrics to measure classification performance.", options=("Confusion Matrix", "ROC Curve", "Precision-Recall Curve", "Feature Importances"), default=("Confusion Matrix", "ROC Curve", "Precision-Recall Curve", "Feature Importances"), placeholder="Choose metrics")
+        show_evaluation_results(main_container)
 
 
 @st.cache_data
@@ -215,29 +197,29 @@ def split_data(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series,
     return X_train, X_test, y_train, y_test
 
 
-def show_evaluation_results():
-    st.header("Evaluation Results")
+def show_evaluation_results(main_container):
+    with main_container:
+        st.header("Evaluation Results")
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(["Performance Metrics", "Confusion Matrix", "ROC Curve", "Precision-Recall Curve", "Feature Importances"])
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Metrics", "Confusion Matrix", "ROC Curve", "Precision-Recall Curve", "Feature Importances"])
+        with tab1:
+            plot_performance_metrics()
 
-    with tab1:
-        plot_metrics()
+        with tab2:
+            plot_confusion_matrix()
 
-    with tab2:
-        plot_confusion_matrix()
+        with tab3:
+            plot_roc_curve()
 
-    with tab3:
-        plot_roc_curve()
+        with tab4:
+            plot_precision_recall_curve()
 
-    with tab4:
-        plot_precision_recall_curve()
-
-    with tab5:
-        plot_feature_importances()
+        with tab5:
+            plot_feature_importances()
 
 
-def plot_metrics():
-    st.subheader("Metrics")
+def plot_performance_metrics():
+    st.subheader("Performance Metrics")
 
     # Retrieve session state
     previous_accuracy = st.session_state["metrics"]["previous_scores"]["accuracy"]
@@ -255,7 +237,7 @@ def plot_metrics():
     recall_delta = None if previous_recall is None else "{:.4f}".format(present_recall - previous_recall)
     f1_delta = None if previous_f1 is None else "{:.4f}".format(present_f1 - previous_f1)
 
-    # Render metrics
+    # Render performance metrics
     col1, col2, col3, col4 = st.columns(4)
     col1.metric(label="Accuracy score", value=f"{present_accuracy:.4f}", delta=accuracy_delta)
     col2.metric(label="Precision score", value=f"{present_precision:.4f}", delta=precision_delta)
@@ -334,13 +316,13 @@ def plot_feature_importances():
     st.subheader("Feature Importances")
 
     # Retrieve session state
-    model = st.session_state["model"]
+    feature_names = st.session_state["feature_names"]
+    feature_importances = st.session_state["feature_importances"]
 
     # Create feature importances dataframe
-    feature_names = model.feature_names_in_
-    feature_importances = model.feature_importances_
     df_fi = pd.DataFrame({"Feature": feature_names, "Importance": feature_importances}).sort_values(by="Importance", ascending=False).reset_index(drop=True)
 
+    # Render feature importances
     chart = alt.Chart(df_fi).mark_bar(color=st.get_option("theme.primaryColor")).encode(x="Importance", y=alt.Y("Feature", sort="-x", axis=alt.Axis(labelLimit=300)))
     st.altair_chart(chart, theme="streamlit", use_container_width=True)
 
