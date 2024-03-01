@@ -89,7 +89,7 @@ def render_ui():
     # Main
     st.title("Interactive Employee Classifier")
     st.write(f"`Version {__version__}`")
-    st.write("Want to predict employee attrition using the features from a HR dataset? Well, look no further! This interactive tool allows you to build and evaluate different machine learning classification models exactly for that purpose.")
+    st.write("Want to predict employee attrition using the features from a HR dataset? Well, look no further! This interactive tool allows you to build and evaluate different machine learning classification models exactly for this purpose.")
     main_container = st.container()
 
     # Sidebar
