@@ -29,7 +29,7 @@ __version__ = "1.0"
 
 # Constants
 DATASETS_DIR = Path("datasets")
-FORM_BUTTON_LABEL_ENABLED = "Run model"
+FORM_BUTTON_LABEL_ENABLED = "Train model"
 FORM_BUTTON_LABEL_DISABLED = "Training model..."
 
 
@@ -79,13 +79,13 @@ def render_ui():
     # Main
     st.title("Interactive Employee Classifier")
     st.write(f"`Version {__version__}`")
-    st.write("Want to predict employee attrition using the features from a HR dataset? Well, look no further! This interactive tool allows you to build, tune, and evaluate different machine learning classification models exactly for this purpose.")
+    st.write("Want to predict employee attrition using the features from a HR dataset? Well, look no further! This interactive tool allows you to build and evaluate different machine learning classification models exactly for that purpose.")
     main_container = st.container()
 
     # Sidebar
     with st.sidebar:
         # Header
-        st.image(image="assets/img/streamlit_logo.svg", width=200)
+        st.image(image="static/streamlit_logo.svg", width=200)
         st.title(f"Interactive Employee Classifier `version {__version__}`")
 
         # Dataset
@@ -111,7 +111,7 @@ def render_ui():
                 if algorithm == "Decision Tree":
                     criterion = st.selectbox(label="criterion", options=("gini", "entropy", "log_loss"), index=0, help="The function to measure the quality of a split.")
                     max_depth = st.number_input(label="max_depth", min_value=1, max_value=None, value=None, step=1, placeholder="None", help="The maximum depth of the tree.")
-                    max_features = st.number_input(label="max_features", min_value=1, max_value=None, value=None, step=1, placeholder="None", help="The number of features to consider when looking for the best split.")
+                    max_features = st.selectbox(label="max_features", options=(None, "sqrt", "log2"), index=0, help="The number of features to consider when looking for the best split.")
                     min_samples_leaf = st.number_input(label="min_samples_leaf", min_value=1, max_value=None, value=1, step=1, help="The minimum number of samples required to be at a leaf node.")
                     min_samples_split = st.number_input(label="min_samples_split", min_value=2, max_value=None, value=2, step=1, help="The minimum number of samples required to split an internal node.")
                 elif algorithm == "Random Forest":
