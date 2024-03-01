@@ -1,3 +1,11 @@
+"""
+Interactive Employee Classifier
+
+
+Built with Streamlit in Python. See Streamlit documentation for more information on data flow:
+https://docs.streamlit.io/get-started/fundamentals/main-concepts#data-flow
+"""
+
 # ----------------------------------------------------------------------------
 # Imports
 # ----------------------------------------------------------------------------
@@ -109,25 +117,27 @@ def render_ui():
             st.header("Hyperparameters")
             with st.expander("Fine-tune model", expanded=False):
                 if algorithm == "Decision Tree":
-                    criterion = st.selectbox(label="criterion", options=("gini", "entropy", "log_loss"), index=0, help="The function to measure the quality of a split.")
+                    criterion = st.selectbox(label="criterion", options=("entropy", "gini", "log_loss"), index=1, help="The function to measure the quality of a split.")
                     max_depth = st.number_input(label="max_depth", min_value=1, max_value=None, value=None, step=1, placeholder="None", help="The maximum depth of the tree.")
-                    max_features = st.selectbox(label="max_features", options=(None, "sqrt", "log2"), index=0, help="The number of features to consider when looking for the best split.")
+                    max_features = st.selectbox(label="max_features", options=(None, "log2", "sqrt"), index=0, help="The number of features to consider when looking for the best split.")
                     min_samples_leaf = st.number_input(label="min_samples_leaf", min_value=1, max_value=None, value=1, step=1, help="The minimum number of samples required to be at a leaf node.")
                     min_samples_split = st.number_input(label="min_samples_split", min_value=2, max_value=None, value=2, step=1, help="The minimum number of samples required to split an internal node.")
                 elif algorithm == "Random Forest":
-                    max_depth = st.number_input(label="Max depth", help="The maximum depth of the tree.", min_value=1, max_value=None, value=None, step=1, placeholder="None")
-                    max_features = st.number_input(label="Max features", help="The number of features to consider when looking for the best split.", min_value=1, max_value=None, value=None, step=1, placeholder="None")
-                    max_samples = st.number_input(label="Max samples", help="If bootstrap is True, the number of samples to draw from X to train each base estimator.", min_value=1, max_value=X_train.shape[0], value=None, step=1, placeholder="None")
-                    min_samples_leaf = st.number_input(label="Min samples leaf", help="The minimum number of samples required to be at a leaf node.", min_value=1, max_value=None, value=1, step=1, placeholder="1")
-                    min_samples_split = st.number_input(label="Min samples split", help="The minimum number of samples required to split an internal node.", min_value=2, max_value=None, value=2, step=1, placeholder="2")
-                    n_estimators = st.number_input(label="Number of estimators", help="The number of trees in the forest.", min_value=1, max_value=500, value=100, step=1, placeholder="100")
+                    bootstrap = st.toggle(label="bootstrap", value=True, help="Whether bootstrap samples are used when building trees.")
+                    criterion = st.selectbox(label="criterion", options=("gini", "entropy", "log_loss"), index=0, help="The function to measure the quality of a split.")
+                    max_depth = st.number_input(label="max_depth", min_value=1, max_value=None, value=None, step=1, placeholder="None", help="The maximum depth of the tree.")
+                    max_features = st.selectbox(label="max_features", options=(None, "log2", "sqrt"), index=2, help="The number of features to consider when looking for the best split.")
+                    max_samples = st.number_input(label="max_samples", min_value=1, max_value=X_train.shape[0], value=None, step=1, placeholder="None", help="If bootstrap is True, the number of samples to draw from X to train each base estimator.")
+                    min_samples_leaf = st.number_input(label="min_samples_leaf", min_value=1, max_value=None, value=1, step=1, help="The minimum number of samples required to be at a leaf node.")
+                    min_samples_split = st.number_input(label="min_samples_split", min_value=2, max_value=None, value=2, step=1, help="The minimum number of samples required to split an internal node.")
+                    n_estimators = st.number_input(label="n_estimators", min_value=1, max_value=500, value=100, step=1, help="The number of trees in the forest.")
                 elif algorithm == "XGBoost":
-                    colsample_bytree = st.number_input(label="Colsample bytree", help="Subsample ratio of columns when constructing each tree.", min_value=0.0, max_value=1.0, value=None, step=0.1, placeholder="None")
-                    learning_rate = st.number_input(label="Learning rate", help='Boosting learning rate (xgb’s “eta”)', min_value=0.0, max_value=1.0, value=None, step=0.1, placeholder="None")
-                    max_depth = st.number_input(label="Max depth", help="Maximum tree depth for base learners.", min_value=1, max_value=None, value=None, step=1, placeholder="None")
-                    min_child_weight = st.number_input(label="Min child weight", help="Minimum sum of instance weight(hessian) needed in a child.", min_value=0.0, max_value=1.0, value=None, step=0.1, placeholder="None")
-                    n_estimators = st.number_input(label="Number of estimators", help="Number of boosting rounds.", min_value=1, max_value=500, value=500, step=1, placeholder="100")
-                    subsample = st.number_input(label="Subsample", help="Subsample ratio of the training instance.", min_value=0.0, max_value=1.0, value=1.0, step=0.1, placeholder="1.0")
+                    max_depth = st.number_input(label="max_depth", min_value=0, max_value=None, value=6, step=1, help="Maximum tree depth for base learners.")
+                    min_child_weight = st.number_input(label="min_child_weight", min_value=0, max_value=None, value=1, step=1, help="Minimum sum of instance weight(hessian) needed in a child.")
+                    subsample = st.slider(label="subsample", min_value=0.01, max_value=1.0, value=1.0, step=0.01, help="Subsample ratio of the training instance.")
+                    colsample_bytree = st.slider(label="colsample_bytree", min_value=0.01, max_value=1.0, value=1.0, step=0.01, help="Subsample ratio of columns when constructing each tree.")
+                    learning_rate = st.slider(label="learning_rate", min_value=0.01, max_value=1.0, value=0.3, step=0.01, help="Boosting learning rate (xgb’s \"eta\")")
+                    n_estimators = st.number_input(label="n_estimators", min_value=1, max_value=500, value=100, step=1, help="Number of boosting rounds.")
 
             # Button
             st.form_submit_button(label=st.session_state["form_submit_button_label"], type="primary", use_container_width=True, disabled=st.session_state["form_submit_button_disabled"], on_click=handle_form_submit_button_click)
@@ -145,7 +155,7 @@ def render_ui():
             if algorithm == "Decision Tree":
                 model = DecisionTreeClassifier(criterion=criterion, max_depth=max_depth, max_features=max_features, min_samples_leaf=min_samples_leaf, min_samples_split=min_samples_split, random_state=42) # type: ignore
             elif algorithm == "Random Forest":
-                model = RandomForestClassifier(max_depth=max_depth, max_features=max_features, max_samples=max_samples, min_samples_leaf=min_samples_leaf, min_samples_split=min_samples_split, n_estimators=n_estimators, n_jobs=-1, random_state=42) # type: ignore
+                model = RandomForestClassifier(bootstrap=bootstrap, criterion=criterion, max_depth=max_depth, max_features=max_features, max_samples=max_samples, min_samples_leaf=min_samples_leaf, min_samples_split=min_samples_split, n_estimators=n_estimators, n_jobs=-1, random_state=42) # type: ignore
             elif algorithm == "XGBoost":
                 model = XGBClassifier(colsample_bytree=colsample_bytree, learning_rate=learning_rate, max_depth=max_depth, min_child_weight=min_child_weight, n_estimators=n_estimators, subsample=subsample, objective="binary:logistic", n_jobs=-1, random_state=42) # type: ignore
 
