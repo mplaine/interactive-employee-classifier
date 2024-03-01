@@ -4,10 +4,13 @@
 
 Want to predict employee attrition using the features from a HR dataset? Well, look no further! This interactive tool allows you to build and evaluate different machine learning classification models exactly for this purpose.
 
+**Live app:** <https://interactive-employee-classifier.streamlit.app><br>
+**Demo video:** <https://youtu.be/UPSQSVIewec>
+
 
 ## Dataset
 
-This project uses preprocessed versions of the [HR dataset](https://www.kaggle.com/datasets/mfaisalqureshi/hr-analytics-and-job-prediction) from Kaggle. The original dataset contains 14,999 rows and 10 columns, each row representing self-reported information from employees.
+This project uses preprocessed versions of an [HR dataset](https://www.kaggle.com/datasets/mfaisalqureshi/hr-analytics-and-job-prediction) from Kaggle. The original dataset contains 14,999 rows and 10 columns, each row representing self-reported information from employees.
 
 
 ## Quick Start Guide
@@ -46,7 +49,7 @@ pip install -r requirements.txt
 
 ### Usage
 
-Run the Streamlit application:
+Start the Streamlit application:
 
 ```bash
 streamlit run app.py
