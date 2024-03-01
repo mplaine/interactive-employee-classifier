@@ -2,7 +2,9 @@
 Interactive Employee Classifier
 
 
-Built with Streamlit in Python. See Streamlit documentation for more information on data flow:
+Built with Streamlit in Python.
+
+Note: Familiarize yourself with Streamlit data flow,
 https://docs.streamlit.io/get-started/fundamentals/main-concepts#data-flow
 """
 
@@ -139,7 +141,7 @@ def render_ui():
                     learning_rate = st.slider(label="learning_rate", min_value=0.01, max_value=1.0, value=0.3, step=0.01, help="Boosting learning rate (xgb’s \"eta\")")
                     n_estimators = st.number_input(label="n_estimators", min_value=1, max_value=500, value=100, step=1, help="Number of boosting rounds.")
 
-            # Button
+            # Form submit button
             st.form_submit_button(label=st.session_state["form_submit_button_label"], type="primary", use_container_width=True, disabled=st.session_state["form_submit_button_disabled"], on_click=handle_form_submit_button_click)
 
         # Footer
@@ -148,6 +150,7 @@ def render_ui():
             Created with ❤️ by [Markku Laine](https://markkulaine.com).            
         """)
 
+        # Form submit button click handler when disabled
         if st.session_state["form_submit_button_disabled"]:
             st.session_state["show_evaluation_results"] = True
 
@@ -180,7 +183,7 @@ def render_ui():
             st.session_state["metrics"]["present_scores"]["f1"] = f1_score(y_test, y_pred)
             st.session_state["form_submit_button_disabled"] = False
             st.session_state["form_submit_button_label"] = FORM_BUTTON_LABEL_ENABLED
-            st.rerun() # to update button label and status
+            st.rerun() # to update submit button label and status
 
     # Show evaluation results
     if st.session_state["show_evaluation_results"]:
@@ -192,7 +195,7 @@ def load_data(filepath: Path) -> pd.DataFrame:
     # Load the dataset
     data = pd.read_csv(filepath)
 
-    # Return the DataFrame
+    # Return the dataframe
     return data
 
 
@@ -251,10 +254,10 @@ def plot_performance_metrics():
 
     # Render performance metrics
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric(label="Accuracy score", value=f"{present_accuracy:.4f}", delta=accuracy_delta)
-    col2.metric(label="Precision score", value=f"{present_precision:.4f}", delta=precision_delta)
-    col3.metric(label="Recall score", value=f"{present_recall:.4f}", delta=recall_delta)
-    col4.metric(label="F1 score", value=f"{present_f1:.4f}", delta=f1_delta)
+    col1.metric(label="Accuracy score", value=f"{present_accuracy:.4f}", delta=accuracy_delta, help="The proportion of data points predicted correctly out of all the data points.")
+    col2.metric(label="Precision score", value=f"{present_precision:.4f}", delta=precision_delta, help="The proportion of data points predicted as True that are actually True.")
+    col3.metric(label="Recall score", value=f"{present_recall:.4f}", delta=recall_delta, help="The proportion of data points predicted as True out of all the data points that are actually True.")
+    col4.metric(label="F1 score", value=f"{present_f1:.4f}", delta=f1_delta, help="The harmonic mean of precision and recall.")
 
 
 def plot_confusion_matrix():
