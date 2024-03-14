@@ -55,6 +55,8 @@ Start the Streamlit application:
 streamlit run app.py
 ```
 
+> **Note:** The above command will open the application in a new tab in your default web browser at <http://localhost:8501>.
+
 
 ## License
 
