@@ -12,10 +12,16 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone the project repository
-RUN git clone https://github.com/mplaine/interactive-employee-classifier.git .
+# RUN git clone https://github.com/mplaine/interactive-employee-classifier.git .
+
+# Copy the files required for dependencies to be installed
+COPY requirements*.txt ./
 
 # Install Python dependencies
 RUN pip install -r requirements.txt
+
+# Copy all of the source code
+COPY . .
 
 # Expose port 8501
 EXPOSE 8501
