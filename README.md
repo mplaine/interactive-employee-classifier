@@ -15,47 +15,29 @@ This project uses preprocessed versions of an [HR dataset](https://www.kaggle.co
 
 ## Quick Start Guide
 
-### Installation
+### Prerequisites
 
-#### Prerequisites
+* [Docker](https://docs.docker.com/)
 
-* [Python 3.11+](https://www.python.org/)
+### Start application
 
-#### Virtual Environment
-
-Install [Miniconda](https://docs.conda.io/en/latest/miniconda.html), after which we can create a dedicated Python virtual environment for the project:
+To build and start the services (i.e., Streamlit application), run:
 
 ```bash
-# Create a virtual environment for Python 3.11
-conda create -n interactive-employee-classifier python=3.11
-
-# Activate the environment
-conda activate interactive-employee-classifier
-
-# Deactivate the environment, if needed
-conda deactivate
+docker compose up
 ```
 
-#### Python Dependencies
+> **Note:** The build process may take several minutes due to the large amount of Python dependencies.
 
-Install Python dependencies:
+Upon completion, you can start using the Streamlit application by opening your web browser and navigating to <http://localhost:8501>.
+
+### Stop application
+
+To stop and remove the services, just hit `Ctrl+C` and run:
 
 ```bash
-pip install -r requirements.txt
+docker compose down
 ```
-
-> **Note:** Make sure the Python virtual environment is active before installing requirements.
-
-
-### Usage
-
-Start the Streamlit application:
-
-```bash
-streamlit run app.py
-```
-
-> **Note:** The above command will open the application in a new tab in your default web browser at <http://localhost:8501>.
 
 
 ## License
