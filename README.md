@@ -4,7 +4,7 @@
 
 Want to predict employee attrition using the features from a HR dataset? Well, look no further! This interactive tool allows you to build and evaluate different machine learning classification models exactly for this purpose.
 
-**Live app:** <https://interactive-employee-classifier.streamlit.app><br>
+**Live app:** <https://interactive-employee-classifier.onrender.com><br>
 **Demo video:** <https://youtu.be/UPSQSVIewec>
 
 
