@@ -1,0 +1,21 @@
+# Git
+.gitignore
+.git/
+
+# GitHub
+.github/
+
+# Python
+.ipynb_checkpoints/
+
+# Docker
+.dockerignore
+docker-compose.yml
+Dockerfile
+
+# macOS
+.DS_Store
+
+# Documentation
+README.md
+LICENSE

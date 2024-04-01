@@ -1,27 +1,26 @@
-FROM python:3.11.8-slim
+FROM python:3.11.8-slim AS base
 
 # Change working directory
 WORKDIR /usr/src/app
 
-# Install curl, git, etc.
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    software-properties-common \
-    git \
-    && rm -rf /var/lib/apt/lists/*
-
-# Clone the project repository
-# RUN git clone https://github.com/mplaine/interactive-employee-classifier.git .
+# Install curl, add user "python", etc.
+RUN apt-get update && \
+    apt-get install -y curl && \
+    groupadd -r python && useradd -g python python && \
+    chown -R python:python . && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy the files required for dependencies to be installed
-COPY requirements*.txt ./
+COPY --chown=python:python requirements*.txt ./
 
 # Install Python dependencies
 RUN pip install -r requirements.txt
 
 # Copy all of the source code
-COPY . .
+COPY --chown=python:python . .
+
+# Switch to the "python" user
+USER python
 
 # Expose port 8501
 EXPOSE 8501
